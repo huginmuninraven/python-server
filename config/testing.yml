@@ -1,0 +1,31 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: python-tests
+  namespace: justin
+  labels:
+    apps.tanzu.vmware.com/pipeline: test
+    apps.tanzu.vmware.com/language: python
+spec:
+  params:
+    - name: source-url                       # (!) required
+    - name: source-revision                  # (!) required
+  tasks:
+    - name: test
+      params:
+        - name: source-url
+          value: $(params.source-url)
+        - name: source-revision
+          value: $(params.source-revision)
+      taskSpec:
+        params:
+          - name: source-url
+          - name: source-revision
+        steps:
+          - name: test
+            image: python:3.8
+            script: |-
+              cd `mktemp -d`
+              wget -qO- $(params.source-url) | tar xvz -m
+              pip install -r requirements.txt
+              python -m unittest discover -v
